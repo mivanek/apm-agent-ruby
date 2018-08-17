@@ -10,10 +10,7 @@ Bundler.require :default, 'test'
 require 'webmock/rspec'
 WebMock.hide_stubbing_instructions!
 
-require 'support/delegate_matcher'
-require 'support/match_json_schema_matcher'
-require 'support/mock_time'
-require 'support/with_fake_server'
+Dir['spec/support/*.rb'].each { |file| require "./#{file}" }
 
 require 'concurrent'
 Concurrent.use_stdlib_logger(Logger::DEBUG)

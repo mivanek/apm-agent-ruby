@@ -3,7 +3,7 @@
 module ElasticAPM
   module Serializers
     # @api private
-    class Errors < Serializer
+    class Error < Serializer
       # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
       def build(error)
         base = {
@@ -28,10 +28,6 @@ module ElasticAPM
         base
       end
       # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
-
-      def build_all(errors)
-        { errors: Array(errors).map { |e| build(e) } }
-      end
 
       private
 
