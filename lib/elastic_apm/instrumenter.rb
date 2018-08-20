@@ -8,20 +8,30 @@ module ElasticAPM
   class Instrumenter
     include Log
 
-    KEY = :__elastic_transaction_key
+    TRANSACTION_KEY = :__elastic_transaction_key
+    SPAN_KEY = :__elastic_span_key
 
     # @api private
-    class TransactionInfo
+    class Current
       def initialize
-        self.current = nil
+        self.transaction = nil
+        self.span = nil
       end
 
-      def current
-        Thread.current[KEY]
+      def transaction
+        Thread.current[TRANSACTION_KEY]
       end
 
-      def current=(transaction)
-        Thread.current[KEY] = transaction
+      def transaction=(transaction)
+        Thread.current[TRANSACTION_KEY] = transaction
+      end
+
+      def span
+        Thread.current[SPAN_KEY]
+      end
+
+      def span=(span)
+        Thread.current[SPAN_KEY] = span
       end
     end
 
@@ -29,7 +39,7 @@ module ElasticAPM
       @agent = agent
       @config = agent.config
 
-      @transaction_info = TransactionInfo.new
+      @current = Current.new
     end
 
     attr_reader :agent, :config, :pending_transactions
@@ -48,24 +58,23 @@ module ElasticAPM
     end
 
     def current_transaction
-      @transaction_info.current
+      @current.transaction
     end
 
     def current_transaction=(transaction)
-      @transaction_info.current = transaction
+      @current.transaction = transaction
     end
 
     # rubocop:disable Metrics/MethodLength
-    # rubocop:disable Metrics/CyclomaticComplexity
-    def transaction(name = nil, type = nil, context: nil, sampled: nil)
+    def start_transaction(name = nil, type = nil, context: nil, sampled: nil)
       unless config.instrument
         yield if block_given?
         return
       end
 
       if (transaction = current_transaction)
-        yield transaction if block_given?
-        return transaction
+        raise ExistingTransactionError,
+          "Transactions may not be nested.\nAlready inside #{transaction}"
       end
 
       sampled = random_sample? if sampled.nil?
@@ -85,7 +94,6 @@ module ElasticAPM
 
       transaction
     end
-    # rubocop:enable Metrics/CyclomaticComplexity
     # rubocop:enable Metrics/MethodLength
 
     def random_sample?

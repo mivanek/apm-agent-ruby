@@ -8,14 +8,15 @@ module ElasticAPM
       it 'cleans up after itself' do
         instrumenter = Instrumenter.new(agent)
 
-        instrumenter.transaction
+        instrumenter.start_transaction
 
         expect(instrumenter.current_transaction).to_not be_nil
 
         instrumenter.stop
 
         expect(instrumenter.current_transaction).to be_nil
-        expect(Thread.current[ElasticAPM::Instrumenter::KEY]).to be_nil
+        thread_key = Thread.current[ElasticAPM::Instrumenter::TRANSACTION_KEY]
+        expect(thread_key).to be_nil
       end
     end
 
@@ -24,7 +25,7 @@ module ElasticAPM
 
       it 'returns a new transaction and sets it as current' do
         context = Context.new
-        transaction = subject.transaction 'Test', 't', context: context
+        transaction = subject.start_transaction 'Test', 't', context: context
         expect(transaction.name).to eq 'Test'
         expect(transaction.type).to eq 't'
         expect(transaction.id).to be subject.current_transaction.id
@@ -32,9 +33,12 @@ module ElasticAPM
         expect(transaction.context).to be context
       end
 
-      it 'returns the current transaction if present' do
-        transaction = subject.transaction 'Test'
-        expect(subject.transaction('Test')).to eq transaction
+      it 'explodes if called inside other transaction' do
+        subject.start_transaction 'Test' do
+          expect do
+            subject.start_transaction('Test')
+          end.to raise_error(ExistingTransactionError)
+        end
       end
 
       context 'with a block' do
@@ -42,7 +46,7 @@ module ElasticAPM
           block_ = ->(*args) {}
           allow(block_).to receive(:call)
 
-          result = subject.transaction('Test') { |t| block_.call(t) }
+          result = subject.start_transaction('Test') { |t| block_.call(t) }
 
           expect(block_).to have_received(:call).with(result)
         end
@@ -53,7 +57,7 @@ module ElasticAPM
         it 'is a noop' do
           called = false
 
-          transaction = subject.transaction do
+          transaction = subject.start_transaction do
             subject.span 'things' do
               called = true
             end
@@ -79,7 +83,7 @@ module ElasticAPM
         let(:agent) { Agent.new(Config.new(span_frames_min_duration: 10)) }
 
         it 'collects stacktraces', :mock_time do
-          t = subject.transaction do
+          t = subject.start_transaction do
             travel 100
 
             subject.span 'Things', backtrace: caller do
@@ -104,7 +108,7 @@ module ElasticAPM
       subject { Instrumenter.new(agent) }
 
       it 'sets tag on currenct transaction' do
-        transaction = subject.transaction 'Test' do |t|
+        transaction = subject.start_transaction 'Test' do |t|
           subject.set_tag :things, 'are all good!'
           t
         end
@@ -117,7 +121,7 @@ module ElasticAPM
       subject { Instrumenter.new(agent) }
 
       it 'sets custom context on transaction' do
-        transaction = subject.transaction 'Test' do |t|
+        transaction = subject.start_transaction 'Test' do |t|
           subject.set_custom_context(one: 'is in', two: 2, three: false)
           t
         end
@@ -136,7 +140,7 @@ module ElasticAPM
       subject { Instrumenter.new(agent) }
 
       it 'sets user in context' do
-        transaction = subject.transaction 'Test' do |t|
+        transaction = subject.start_transaction 'Test' do |t|
           subject.set_user(User.new(1, 'a@a', 'abe'))
           t
         end
@@ -165,7 +169,7 @@ module ElasticAPM
       end
 
       it 'skips spans' do
-        transaction = subject.transaction 'Test' do |t|
+        transaction = subject.start_transaction 'Test' do |t|
           t.span 'many things'
           t
         end.done

@@ -3,7 +3,7 @@
 module ElasticAPM
   module Serializers
     # @api private
-    class Error < Serializer
+    class ErrorSerializer < Serializer
       # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
       def build(error)
         base = {

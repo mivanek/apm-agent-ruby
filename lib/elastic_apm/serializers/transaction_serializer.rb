@@ -3,7 +3,7 @@
 module ElasticAPM
   module Serializers
     # @api private
-    class Transaction < Serializer
+    class TransactionSerializer < Serializer
       # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
       def build(transaction)
         base = {

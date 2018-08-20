@@ -3,10 +3,10 @@
 module ElasticAPM
   module Serializers
     # @api private
-    class Span < Serializer
+    class SpanSerializer < Serializer
       # rubocop:disable Metrics/AbcSize
       def build(span)
-        {
+        span = {
           id: span.id,
           parent: span.parent && span.parent.id,
           name: span.name,
@@ -16,6 +16,8 @@ module ElasticAPM
           context: span.context && { db: span.context.to_h },
           stacktrace: span.stacktrace.to_a
         }
+
+        { span: span }
       end
       # rubocop:enable Metrics/AbcSize
     end

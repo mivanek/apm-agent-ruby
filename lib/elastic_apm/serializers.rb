@@ -24,6 +24,6 @@ module ElasticAPM
   end
 end
 
-require 'elastic_apm/serializers/transaction'
-require 'elastic_apm/serializers/span'
-require 'elastic_apm/serializers/error'
+require 'elastic_apm/serializers/transaction_serializer'
+require 'elastic_apm/serializers/span_serializer'
+require 'elastic_apm/serializers/error_serializer'

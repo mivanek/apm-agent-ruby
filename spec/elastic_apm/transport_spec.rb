@@ -14,7 +14,7 @@ module ElasticAPM
 
         transport = Transport.new agent.config
         transaction = Transaction.new instrumenter, 'T' do |t|
-          t.span 'span 1' do
+          t.span 'span 0' do
           end
         end
 

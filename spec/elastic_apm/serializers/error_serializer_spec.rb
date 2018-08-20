@@ -2,11 +2,11 @@
 
 module ElasticAPM
   module Serializers
-    RSpec.describe Errors do
+    RSpec.describe ErrorSerializer do
       let(:config) { Config.new }
       let(:agent) { Agent.new config }
 
-      let(:builder) { Errors.new config }
+      let(:builder) { described_class.new config }
 
       before do
         @mock_uuid = SecureRandom.uuid
@@ -41,7 +41,9 @@ module ElasticAPM
 
         context 'an error with a transaction id' do
           it 'attaches the transaction' do
-            error = Error.new.tap { |e| e.transaction_id = 'abc123' }
+            error = ElasticAPM::Error.new.tap do |e|
+              e.transaction_id = 'abc123'
+            end
             subject = builder.build(error)
             expect(subject[:transaction]).to eq(id: 'abc123')
           end
