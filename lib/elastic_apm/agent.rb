@@ -8,7 +8,6 @@ require 'elastic_apm/error'
 require 'elastic_apm/http'
 require 'elastic_apm/spies'
 require 'elastic_apm/serializers'
-require 'elastic_apm/worker'
 
 module ElasticAPM
   # rubocop:disable Metrics/ClassLength
@@ -92,8 +91,6 @@ module ElasticAPM
     def stop
       @instrumenter.stop
 
-      kill_worker
-
       self
     end
 
@@ -104,13 +101,13 @@ module ElasticAPM
     # queues
 
     def enqueue_transaction(transaction)
-      boot_worker unless worker_running?
+      # boot_worker unless worker_running?
 
       pending_transactions.push(transaction)
 
       return unless should_flush_transactions?
 
-      messages.push(Worker::FlushMsg.new)
+      # messages.push(Worker::FlushMsg.new)
     end
 
     def should_flush_transactions?
@@ -121,9 +118,9 @@ module ElasticAPM
     end
 
     def enqueue_error(error)
-      boot_worker unless worker_running?
+      # boot_worker unless worker_running?
 
-      messages.push(Worker::ErrorMsg.new(error))
+      # messages.push(Worker::ErrorMsg.new(error))
     end
 
     # instrumentation
@@ -199,34 +196,34 @@ module ElasticAPM
       '<ElasticAPM::Agent>'
     end
 
-    private
+    # private
 
-    def boot_worker
-      debug 'Booting worker'
+    # def boot_worker
+    #   debug 'Booting worker'
 
-      @worker_thread = Thread.new do
-        Worker.new(
-          config,
-          messages,
-          pending_transactions,
-          http
-        ).run_forever
-      end
-    end
+    #   @worker_thread = Thread.new do
+    #     Worker.new(
+    #       config,
+    #       messages,
+    #       pending_transactions,
+    #       http
+    #     ).run_forever
+    #   end
+    # end
 
-    def kill_worker
-      messages << Worker::StopMsg.new
+    # def kill_worker
+    #   messages << Worker::StopMsg.new
 
-      if @worker_thread && !@worker_thread.join(5) # 5 secs
-        raise 'Failed to wait for worker, not all messages sent'
-      end
+    #   if @worker_thread && !@worker_thread.join(5) # 5 secs
+    #     raise 'Failed to wait for worker, not all messages sent'
+    #   end
 
-      @worker_thread = nil
-    end
+    #   @worker_thread = nil
+    # end
 
-    def worker_running?
-      @worker_thread && @worker_thread.alive?
-    end
+    # def worker_running?
+    #   @worker_thread && @worker_thread.alive?
+    # end
   end
   # rubocop:enable Metrics/ClassLength
 end

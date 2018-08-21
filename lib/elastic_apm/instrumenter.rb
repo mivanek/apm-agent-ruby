@@ -66,7 +66,7 @@ module ElasticAPM
     end
 
     # rubocop:disable Metrics/MethodLength
-    def start_transaction(name = nil, type = nil, context: nil, sampled: nil)
+    def transaction(name = nil, type = nil, context: nil, sampled: nil)
       unless config.instrument
         yield if block_given?
         return

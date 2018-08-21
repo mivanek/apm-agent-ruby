@@ -4,6 +4,8 @@ require 'elastic_apm/transport/connection'
 
 module ElasticAPM
   RSpec.describe Connection do
+    subject { Connection.new 'http://localhost:4321/v2/intake' }
+
     describe '#initialize' do
       it { should_not be_connected }
     end

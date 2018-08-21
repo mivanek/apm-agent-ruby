@@ -15,7 +15,7 @@ module ElasticAPM
       describe '#build', :mock_time do
         context 'a span' do
           let(:span) do
-            t = instrumenter.start_transaction do
+            t = instrumenter.transaction do
               instrumenter.span('SELECT *', 'db.query') do
                 travel 100
               end

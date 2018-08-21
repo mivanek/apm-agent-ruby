@@ -13,9 +13,9 @@ module ElasticAPM
       @connection = Connection.new(intake_url)
 
       @serializers = Struct.new(:transaction, :span, :error).new(
-        Serializers::Transaction.new(config),
-        Serializers::Span.new(config),
-        Serializers::Error.new(config)
+        Serializers::TransactionSerializer.new(config),
+        Serializers::SpanSerializer.new(config),
+        Serializers::ErrorSerializer.new(config)
       )
     end
 
